@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <title>Title</title>
-    <link rel="stylesheet" type="text/css" href="style.css"/>
+    <link rel="stylesheet" type="text/css" href="static/style.css"/>
 </head>
 <body>
 <header>
@@ -11,29 +11,77 @@
 
 <div id="up-button">Top</div>
 
-{% if file.messages %}
-<h1 id="message-types">Messages</h1>
-{% for msg in file.messages|sort(attribute="name") %}
-<div class="sep"></div>
+{% macro enum_box(enum) %}
+    <h2 class="monospace message-heading" id="enum-{{ enum.name }}">Enum {{ enum.name }}</h2>
+    {% if enum.description %}{% autoescape off %}
+        <div class="description">
+            {{ enum.description|replace("\n", "<br/>")|replace("\t","&nbsp;&nbsp;")|replace(" ", "&nbsp;") }}
+        </div>
+    {% endautoescape %}{% endif %}
+<ul>
+    {% for val in enum.values %}
+    <li>{{ val.name }}{% if val.descripion %} - {{ val.description }}{% endif %}</li>
+    {% endfor %}
+</ul>
+{% endmacro %}
+
+{% macro message_box(msg) %}
 <h2 class="monospace message-heading" id="message-{{ msg.name }}">{{ msg.name }}</h2>
 {% if msg.description %}{% autoescape off %}
 <div class="description">
-    {{ msg.description|replace("\n", "<br/>")|replace("\t","&nbsp;&nbsp;&nbsp;&nbsp;")|replace(" ", "&nbsp;") }}
+    {{ msg.description|replace("\n", "<br/>")|replace("\t","&nbsp;&nbsp;")|replace(" ", "&nbsp;") }}
 </div>
 {% endautoescape %}{% endif %}
-<ul class="message-field-list">{% for fld in msg.fields %}
-    <li>
-        <b><span class="monospace">{{ fld.name }}</span></b>
-        {% if fld.is_primitive %}
-            <span class="datatype">{{ fld.typ }}</span>
-        {% else %}
-            <a href="#message-{{ fld.typ.strip(".") }}" class="message-type">{{ fld.typ }}</a>
-        {% endif %}
-        {% if fld.description %}
-            -&nbsp;<span>{{ fld.description }}</span>
-        {% endif %}</li>
-{% endfor %}</ul>
-{% endfor %}
+<table class="message-field-list">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for fld in msg.fields %}
+        <tr>
+            <td><b><span class="monospace">{{ fld.name }}</span></b></td>
+            <td>
+                {% if fld.is_primitive %}
+                    <span class="datatype">{{ fld.typ }}</span>
+                {% else %}
+                    <a href="#message-{{ fld.typ.strip(".") }}" class="message-type">{{ fld.typ }}</a>
+                {% endif %}
+            </td>
+            <td>
+                {% if fld.description %}<span>{{ fld.description }}</span>{% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% if msg.messages %}
+    <p>Sub-messages:</p>
+    {% for submsg in msg.messages %}
+        {{ message_box(submsg) }}
+    {% endfor %}
+{% endif %}
+{% if msg.enums %}
+    {% for enum in msg.enums %}
+        {{ enum_box(enum) }}
+    {% endfor %}
+{% endif %}
+{% endmacro %}
+
+{% if file.enums %}
+    {% for enum in file.enums %}
+        {{ enum_box(enum) }}
+    {% endfor %}
+{% endif %}
+{% if file.messages %}
+    <h1 id="message-types">Messages</h1>
+    {% for msg in file.messages|sort(attribute="name") %}
+        <div class="sep"></div>
+        {{ message_box(msg) }}
+    {% endfor %}
 {% endif %}
 
 {% if file.services %}
@@ -56,6 +104,6 @@
     {% endfor %}
 {% endif %}
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-<script src="index.js"></script>
+<script src="static/index.js"></script>
 </body>
 </html>

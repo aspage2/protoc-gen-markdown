@@ -15,6 +15,7 @@ function on_hash_change(){
       stop_highlight($curr);
    }
    $curr = $(window.location.hash);
+   debugger;
    highlight($curr);
 }
 $(window).on("hashchange", on_hash_change)

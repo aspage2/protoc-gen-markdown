@@ -14,6 +14,10 @@ body {
     background: #c3c3c3;
 }
 
+.message-container{
+    margin-left: 30px;
+}
+
 #header-title {
     font-size: 2.5rem;
     font-weight: bold;
@@ -40,8 +44,23 @@ header > * {
     font-weight: bold;
 }
 
-.message-field-list li{
-    margin: 5px auto;
+.message-field-list {
+    border-collapse: collapse;
+    max-width: 1000px;
+    margin: 20px 5px;
+}
+
+.message-field-list thead {
+    background: #2b2b2b;
+    color: white;
+}
+
+.message-field-list th, .message-field-list td {
+    padding: 5px;
+}
+
+.message-field-list, .message-field-list th, .message-field-list td {
+    border: 1px solid black;
 }
 
 a.message-type {
@@ -63,7 +82,7 @@ a.message-type:active {
     font-size: 0.9rem;
     color: #2b2b2b;
     max-width: 1000px;
-    width: 100vw;
+    width: 75vw;
     padding: 20px;
     border-radius: 10px;
     background: #dedede;

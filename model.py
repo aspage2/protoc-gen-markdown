@@ -12,7 +12,6 @@ page for each file in the request:
  3. Render the html document(s) using the fully-fleshed-out tree.
 """
 
-
 import typing as T
 from dataclasses import dataclass, field
 from enum import Enum
@@ -28,7 +27,7 @@ class MessageField:
     is_primitive: bool
     description: str = ""
 
-    def add_description(self, description: str, path:T.List[int]):
+    def add_description(self, description: str, path: T.List[int]):
         if len(path) < 2:
             self.description = description
 
@@ -36,11 +35,18 @@ class MessageField:
 @dataclass
 class Message:
     name: str
-    fields: T.List[MessageField]
-    sub_messages: T.List['Message']
+    fields: T.List[MessageField] = field(default_factory=list)
+    messages: T.List['Message'] = field(default_factory=list)
+    enums: T.List['ProtoEnum'] = field(default_factory=list)
     description: str = ""
 
-    def add_description(self, description: str, path:T.List[int]):
+    @property
+    def descendants(self):
+        for msg in self.messages:
+            yield msg
+            yield from msg.descendants
+
+    def add_description(self, description: str, path: T.List[int]):
         if len(path) < 2:
             self.description = description
             return
@@ -48,6 +54,43 @@ class Message:
         fid = path[0]
         if fid == desc_proto.DescriptorProto.FIELD_FIELD_NUMBER:
             self.fields[path[1]].add_description(description, path[2:])
+        elif fid == desc_proto.DescriptorProto.NESTED_TYPE_FIELD_NUMBER:
+            self.messages[path[1]].add_description(description, path[2:])
+        elif fid == desc_proto.DescriptorProto.ENUM_TYPE_FIELD_NUMBER:
+            self.enums[path[1]].add_description(description, path[2:])
+
+    @staticmethod
+    def _make_message(msg, name=None):
+        if name is not None:
+            m = Message(".".join([name, msg.name]))
+        else:
+            m = Message(msg.name)
+        # Populate fields
+        for fld in msg.field:
+            try:
+                ts = DataType.display_string(DataType(fld.type))
+                is_prim = True
+            except UseMessageTypeName:
+                ts = fld.type_name
+                is_prim = False
+            m.fields.append(MessageField(fld.name, ts, is_prim))
+
+        # Populate sub-messages
+        m.messages.extend(
+            Message._make_message(submsg, m.name)
+            for submsg in msg.nested_type
+        )
+
+        # Populate enums
+        m.enums.extend(
+            ProtoEnum.make_enum(e)
+            for e in msg.enum_type
+        )
+        return m
+
+    @staticmethod
+    def make_message(msg: desc_proto.DescriptorProto) -> 'Message':
+        return Message._make_message(msg)
 
 
 @dataclass
@@ -65,7 +108,7 @@ class RPC:
 @dataclass
 class Service:
     name: str
-    rpcs: T.List[RPC]
+    rpcs: T.List[RPC] = field(default_factory=list)
     description: str = ""
 
     def add_description(self, description: str, path: T.List[int]):
@@ -109,6 +152,15 @@ class ProtoEnum:
         if fid == desc_proto.EnumDescriptorProto.VALUE_FIELD_NUMBER:
             self.values[path[1]].add_description(description, path)
 
+    @staticmethod
+    def make_enum(enum: desc_proto.EnumDescriptorProto) -> 'ProtoEnum':
+        e = ProtoEnum(enum.name, [])
+        e.values.extend(
+            ProtoEnumValue(val.name)
+            for val in enum.value
+        )
+        return e
+
 
 @dataclass
 class ProtoEnumValue:
@@ -125,6 +177,7 @@ class UseMessageTypeName(Exception):
 
 
 class DataType(Enum):
+    """Data types for stuff"""
     STRING = 9
     INT_32 = 5
     FLOAT = 2
@@ -158,26 +211,30 @@ def build_files(request: CodeGeneratorRequest) -> T.List[File]:
     for proto_file in request.proto_file:
         f_out = File(proto_file.name)
         files.append(f_out)
-        for msg in proto_file.message_type:
-            m = Message(msg.name, [], [])
-            f_out.messages.append(m)
-            for fld in msg.field:
-                try:
-                    ts = DataType.display_string(DataType(fld.type))
-                    is_prim = True
-                except UseMessageTypeName:
-                    ts = fld.type_name
-                    is_prim = False
-                m.fields.append(MessageField(fld.name, ts, is_prim))
+        f_out.messages.extend(
+            Message.make_message(m) for m in proto_file.message_type
+        )
+        f_out.enums.extend(
+            ProtoEnum.make_enum(e) for e in proto_file.enum_type
+        )
         for serv in proto_file.service:
             s = Service(serv.name, [])
             f_out.services.append(s)
             for rpc in serv.method:
                 s.rpcs.append(RPC(rpc.name, rpc.input_type, rpc.output_type))
-        for enum in proto_file.enum_type:
-            e = ProtoEnum(enum.name, [])
-            f_out.enums.append(e)
-            for val in enum.value:
-                e.values.append(ProtoEnumValue(val.name))
+
 
     return files
+
+
+def populate_descriptions(file_model: File, proto_file):
+    for loc in proto_file.source_code_info.location:
+        desc = []
+        if loc.leading_comments:
+            desc.append(loc.leading_comments)
+        if loc.trailing_comments:
+            desc.append(loc.trailing_comments)
+        if loc.leading_detached_comments:
+            desc.extend(l for l in loc.leading_detached_comments)
+        if desc:
+            file_model.add_description(" ".join(desc), loc.path)
