@@ -5,5 +5,5 @@ services:
     ports:
       - 5000:80
     volumes:
-      - ./html:/usr/share/nginx/html
-      - ./static:/usr/share/nginx/html/static:ro
+      - ../html:/usr/share/nginx/html
+      - ../static:/usr/share/nginx/html/static:ro

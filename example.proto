@@ -1,0 +1,43 @@
+
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+message AddDecisionRequest {
+
+    // A named decision is a decision paired with its feature IDs
+    message NamedDecision {
+        MDLDecision decision = 1;
+        repeated string feature_id = 2;
+    }
+
+    repeated NamedDecision decision = 1;
+    string agent_id = 2; // The agent which made the decision
+}
+
+// Decision made by a text-quality-like agent
+message TextQualityDecision {
+
+    int32 word_count = 1; // Number of tokens in an input feature
+
+    float redaction_score = 2; // Percent of tokens which aren't REDACTED
+}
+
+// Decision made by a binary classifier
+message BinaryClassifierDecision {
+
+    float isTrue_Score = 1; // Confidence score for a "positive" classification
+}
+
+// MDLDecision is a "union" field which enables
+message MDLDecision {
+    oneof decision {
+        TextQualityDecision text_quality_decision = 1;
+        BinaryClassifierDecision binary_classifier_decision = 2;
+    }
+}
+
+/* Handles the metadata for a machine-learning service. */
+service MachineLearning {
+    rpc AddDecision (AddDecisionRequest) returns (google.protobuf.Empty);
+}

@@ -1,25 +1,36 @@
+-include $(shell curl -sSL -o .build-harness "https://raw.githubusercontent.com/mintel/build-harness/master/templates/Makefile.build-harness"; echo .build-harness)
 
-build: html/data.html json/data.json
+.PHONY: init
+init: bh/init
+	@$(MAKE) bh/venv pipenv
+
+
+.PHONY: up
+up: html/ compose/up
+
+.PHONY: down
+down: compose/down
+
+.PHONY: attach
+attach: compose/attach
 
 html/:
 	mkdir html
-
 json/:
 	mkdir json
-
 raw/:
 	mkdir raw
 
 html/%.html: %.proto html/ templates/base.html $(wildcard *.py)
-	python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=makedoc.py --custom_out=html $<
+	pipenv run python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=makedoc.py --custom_out=html $<
 
 json/%.json: %.proto json/ $(wildcard *.py)
-	python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=dump.py --custom_out=json $<
+	pipenv run python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=dump.py --custom_out=json $<
 
 raw/%: %.proto raw/
-	python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=raw.py --custom_out=raw $<
+	pipenv run python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=raw.py --custom_out=raw $<
 
-clean:
+clean: pipenv/clean python/clean
 	rm -rf html/
 	rm -rf json/
 	rm -rf __pycache__/
