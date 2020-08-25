@@ -23,6 +23,18 @@ message TextQualityDecision {
     float redaction_score = 2; // Percent of tokens which aren't REDACTED
 }
 
+message WhatMessage {
+    // This is below whatmessage.
+
+    int32 a = 1;
+    // This is below a
+    // This is the second line
+    int32 b = 2;
+    // This is below & detached from b.
+
+    int32 c = 3;
+}
+
 // Decision made by a binary classifier
 message BinaryClassifierDecision {
 
@@ -39,5 +51,6 @@ message MDLDecision {
 
 /* Handles the metadata for a machine-learning service. */
 service MachineLearning {
+    // Does some stuff with decisions
     rpc AddDecision (AddDecisionRequest) returns (google.protobuf.Empty);
 }

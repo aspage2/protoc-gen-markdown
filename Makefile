@@ -25,7 +25,7 @@ html/%.html: %.proto html/ templates/base.html $(wildcard *.py)
 	pipenv run python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=makedoc.py --custom_out=html $<
 
 json/%.json: %.proto json/ $(wildcard *.py)
-	pipenv run python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=dump.py --custom_out=json $<
+	pipenv run python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=makejson.py --custom_out=json $<
 
 raw/%: %.proto raw/
 	pipenv run python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=raw.py --custom_out=raw $<

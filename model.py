@@ -223,7 +223,6 @@ def build_files(request: CodeGeneratorRequest) -> T.List[File]:
             for rpc in serv.method:
                 s.rpcs.append(RPC(rpc.name, rpc.input_type, rpc.output_type))
 
-
     return files
 
 
