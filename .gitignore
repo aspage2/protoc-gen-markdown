@@ -9,6 +9,7 @@ __pycache__/
 
 .build-harness*
 build-harness*
+requirements*.txt
 
 # C extensions
 *.so
