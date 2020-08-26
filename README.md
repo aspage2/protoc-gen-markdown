@@ -1,4 +1,4 @@
-# Protoc html-doc generator
+# Protoc markdown generator
 
 Custom `protoc` plugin for auto-generating API documentation as a static HTML/CSS/Javascript site.
 
@@ -9,12 +9,6 @@ Custom `protoc` plugin for auto-generating API documentation as a static HTML/CS
 * Services
 * Enums
 * Comment attribution for all of the above
-
-#### Still-to-Come:
-
-* Indicating `oneof` fields
-* Indicating `repeated` fields
-* Generating multiple files and an `index.html` 
 
 ## Protoc Plugins
 
@@ -35,24 +29,17 @@ The payloads sent through `stdin` and `stdout` are themselves protocol buffers:
 
 When you add a `--python_out=.` to your `protoc` call, protoc looks for a plugin called `protoc-gen-python` on your PATH which it will invoke and send a request to. New plugins are invoked similarly: Your new plugin must be called `protoc-gen-{something}`, exist on the PATH and your protc call must use `--{something}_out=.` to invoke it.
 
-## Usage
+## Installation & Usage
 
-1. `make init`
-2. Create a `.proto` file at the project root.
-3. For a proto file named `{A}.proto`, run `make html/{A}.html`
-4. Run `make up` and navigate to `localhost:5000/{A}.html` in your browser.
+`pip install grpcio-tools protobuf-doc-autogen` from artifactory
 
-### Other make commands
+Keep active the environment in which you installed the library. To use the markdown plugin:
 
-`make html/%.html` - build `%.html` from `%.proto`
+```
+ $ python -m grpcio.tools.protoc -I. --markdown_out=. service.proto
+```
 
-`make json/%.json` - build a JSON output for the data structure built from the syntax tree
-
-`make raw/%` - dump the raw `CodeGeneratorRequest` payload into a file
-
-### Files
-
-* `makedoc.py` - plugin to generate HTML doc
+### Other Local Plugins
 * `makejson.py` - plugin which creates JSON objects out of the python data structure built from the syntax tree
 * `raw.py` - plugin which dumps the input `CodeGeneratorRequest` into `raw/data`
 

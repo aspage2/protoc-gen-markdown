@@ -1,4 +1,3 @@
-
 __title__ = "protobuf-doc-autogen"
 __author__ = "mintel"
 __summary__ = "auto-generate markdown from .proto files"

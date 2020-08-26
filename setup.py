@@ -38,7 +38,7 @@ def setup_package():
         packages=packages,
         install_requires=REQUIRES,
         entry_points={
-            "console_scripts": ['protoc-gen-markdown=auto_proto_doc.generate:generate']
+            "console_scripts": ["protoc-gen-markdown=auto_proto_doc.generate:generate"]
         },
         zip_safe=True,
         classifiers=[

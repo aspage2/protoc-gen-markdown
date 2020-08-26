@@ -13,6 +13,18 @@ raw/:
 md/:
 	mkdir md
 
+test:
+	echo "good job"
+
+test-post-build:
+	echo "nice work"
+
+fmt: python/fmt
+
+lint: python/lint
+
+dist: python/dist
+
 md/%.md: %.proto md/ templates/base.md $(wildcard *.py)
 	pipenv run python -m grpc.tools.protoc -I. --markdown_out=md $<
 

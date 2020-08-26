@@ -1,11 +1,13 @@
+import sys
 import typing as T
 
-from google.protobuf.compiler.plugin_pb2 import CodeGeneratorRequest, CodeGeneratorResponse
-
 import jinja2 as J
-import sys
+from google.protobuf.compiler.plugin_pb2 import (
+    CodeGeneratorRequest,
+    CodeGeneratorResponse,
+)
 
-from auto_proto_doc.model import File, Message, ProtoEnum, Service, RPC
+from auto_proto_doc.model import RPC, File, Message, ProtoEnum, Service
 
 
 def generate():
@@ -45,12 +47,8 @@ def build_files(request: CodeGeneratorRequest) -> T.List[File]:
     for proto_file in request.proto_file:
         f_out = File(proto_file.name)
         files.append(f_out)
-        f_out.messages.extend(
-            Message.make_message(m) for m in proto_file.message_type
-        )
-        f_out.enums.extend(
-            ProtoEnum.make_enum(e) for e in proto_file.enum_type
-        )
+        f_out.messages.extend(Message.make_message(m) for m in proto_file.message_type)
+        f_out.enums.extend(ProtoEnum.make_enum(e) for e in proto_file.enum_type)
         for serv in proto_file.service:
             s = Service(serv.name, [])
             f_out.services.append(s)

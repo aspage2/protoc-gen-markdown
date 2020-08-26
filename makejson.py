@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
+import json
+import sys
 from dataclasses import asdict
 
-from google.protobuf.compiler.plugin_pb2 import CodeGeneratorRequest, CodeGeneratorResponse
-import sys
-import json
+from google.protobuf.compiler.plugin_pb2 import (
+    CodeGeneratorRequest,
+    CodeGeneratorResponse,
+)
 
 from auto_proto_doc.generate import build_files, populate_descriptions
 

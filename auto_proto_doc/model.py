@@ -48,9 +48,9 @@ class OneOfGroup:
 class Message:
     name: str
     fields: T.List[MessageField] = field(default_factory=list)
-    messages: T.List['Message'] = field(default_factory=list)
-    oneof_groups: T.List['OneOfGroup'] = field(default_factory=list)
-    enums: T.List['ProtoEnum'] = field(default_factory=list)
+    messages: T.List["Message"] = field(default_factory=list)
+    oneof_groups: T.List["OneOfGroup"] = field(default_factory=list)
+    enums: T.List["ProtoEnum"] = field(default_factory=list)
     description: str = ""
 
     @property
@@ -65,7 +65,7 @@ class Message:
             for o in self.oneof_groups:
                 yield from o.fields
 
-        for i, (v, _) in enumerate(zip(_walk(), range(fn+1))):
+        for i, (v, _) in enumerate(zip(_walk(), range(fn + 1))):
             if i == fn:
                 return v
 
@@ -115,19 +115,15 @@ class Message:
 
         # Populate sub-messages
         m.messages.extend(
-            Message._make_message(submsg, m.name)
-            for submsg in msg.nested_type
+            Message._make_message(submsg, m.name) for submsg in msg.nested_type
         )
 
         # Populate enums
-        m.enums.extend(
-            ProtoEnum.make_enum(e)
-            for e in msg.enum_type
-        )
+        m.enums.extend(ProtoEnum.make_enum(e) for e in msg.enum_type)
         return m
 
     @staticmethod
-    def make_message(msg: desc_proto.DescriptorProto) -> 'Message':
+    def make_message(msg: desc_proto.DescriptorProto) -> "Message":
         return Message._make_message(msg)
 
 
@@ -162,7 +158,7 @@ class File:
     name: str
     messages: T.List[Message] = field(default_factory=list)
     services: T.List[Service] = field(default_factory=list)
-    enums: T.List['ProtoEnum'] = field(default_factory=list)
+    enums: T.List["ProtoEnum"] = field(default_factory=list)
 
     def add_description(self, description: str, path: T.List[int]):
         if len(path) < 2:
@@ -179,7 +175,7 @@ class File:
 @dataclass
 class ProtoEnum:
     name: str
-    values: T.List['ProtoEnumValue']
+    values: T.List["ProtoEnumValue"]
     description: str = ""
 
     def add_description(self, description: str, path: T.List[int]):
@@ -191,12 +187,9 @@ class ProtoEnum:
             self.values[path[1]].add_description(description, path)
 
     @staticmethod
-    def make_enum(enum: desc_proto.EnumDescriptorProto) -> 'ProtoEnum':
+    def make_enum(enum: desc_proto.EnumDescriptorProto) -> "ProtoEnum":
         e = ProtoEnum(enum.name, [])
-        e.values.extend(
-            ProtoEnumValue(val.name)
-            for val in enum.value
-        )
+        e.values.extend(ProtoEnumValue(val.name) for val in enum.value)
         return e
 
 
@@ -216,6 +209,7 @@ class UseMessageTypeName(Exception):
 
 class DataType(Enum):
     """Data types for stuff"""
+
     STRING = 9
     INT_32 = 5
     FLOAT = 2
@@ -230,7 +224,7 @@ class DataType(Enum):
     GROUP = 10
 
     @staticmethod
-    def display_string(typ: 'DataType'):
+    def display_string(typ: "DataType"):
         if typ is DataType.MESSAGE:
             raise UseMessageTypeName()
         return {
