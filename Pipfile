@@ -5,10 +5,11 @@ verify_ssl = true
 
 [dev-packages]
 grpcio-tools = "*"
-jinja2 = "*"
-protobuf = "*"
 
 [packages]
+jinja2 = "*"
+protobuf = "*"
+protobuf-doc-autogen = {editable = true, path = "."}
 
 [requires]
 python_version = "3.8"

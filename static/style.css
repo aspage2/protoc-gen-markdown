@@ -3,6 +3,17 @@ body {
     font-family: sans-serif;
 }
 
+h1 {
+    width: 100%;
+    padding: 10px;
+    background: #000066;
+    color: white;
+}
+
+.message-field-list > tbody > tr:nth-child(even) {
+    background: #f0f0f0;
+}
+
 .grey-hl {
     background: #dedede;
     padding: 3px;
@@ -60,7 +71,7 @@ header > * {
 }
 
 .message-field-list, .message-field-list th, .message-field-list td {
-    border: 1px solid black;
+    border: 1px solid #b7b7b7;
 }
 
 a.message-type {

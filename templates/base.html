@@ -1,30 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Title</title>
-    <link rel="stylesheet" type="text/css" href="static/style.css"/>
-</head>
-<body>
-<header>
-    <span id="header-title">MDL Protocol Buffers: <span class="monospace grey-hl">{{ file.name }}</span></span>
-</header>
-
-<div id="up-button">Top</div>
-
+{# enum_box renders an enum. #}
 {% macro enum_box(enum) %}
-    <h2 class="monospace message-heading" id="enum-{{ enum.name }}">Enum {{ enum.name }}</h2>
-    {% if enum.description %}{% autoescape off %}
-        <div class="description">
-            {{ enum.description|replace("\n", "<br/>")|replace("\t","&nbsp;&nbsp;")|replace(" ", "&nbsp;") }}
-        </div>
-    {% endautoescape %}{% endif %}
+<h2 class="monospace message-heading" id="enum-{{ enum.name }}">Enum {{ enum.name }}</h2>
+{% if enum.description %}{% autoescape off %}
+<div class="description">
+    {{ enum.description|replace("\n", "<br/>")|replace("\t","&nbsp;&nbsp;")|replace(" ", "&nbsp;") }}
+</div>
+{% endautoescape %}{% endif %}
 <ul>
     {% for val in enum.values %}
-    <li>{{ val.name }}{% if val.descripion %} - {{ val.description }}{% endif %}</li>
+        <li>{{ val.name }}{% if val.descripion %} - {{ val.description }}{% endif %}</li>
     {% endfor %}
 </ul>
 {% endmacro %}
 
+{# message_field_table renders a "field table" for the fields in the list #}
+{% macro message_field_table(flds) %}
+    <table class="message-field-list">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for fld in flds %}
+            <tr>
+                <td><b><span class="monospace">{{ fld.name }}</span></b></td>
+                <td>
+                    {% if fld.repeated %}<span class="datatype">repeated</span>{% endif %}
+                    {% if fld.is_primitive %}
+                        <span class="datatype">{{ fld.typ }}</span>
+                    {% else %}
+                        <a href="#message-{{ fld.typ.strip(".") }}" class="message-type">{{ fld.typ }}</a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if fld.description %}<span>{{ fld.description }}</span>{% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endmacro %}
+
+{# message_box renders a message. #}
 {% macro message_box(msg) %}
 <h2 class="monospace message-heading" id="message-{{ msg.name }}">{{ msg.name }}</h2>
 {% if msg.description %}{% autoescape off %}
@@ -32,32 +52,11 @@
     {{ msg.description|replace("\n", "<br/>")|replace("\t","&nbsp;&nbsp;")|replace(" ", "&nbsp;") }}
 </div>
 {% endautoescape %}{% endif %}
-<table class="message-field-list">
-    <thead>
-    <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for fld in msg.fields %}
-        <tr>
-            <td><b><span class="monospace">{{ fld.name }}</span></b></td>
-            <td>
-                {% if fld.is_primitive %}
-                    <span class="datatype">{{ fld.typ }}</span>
-                {% else %}
-                    <a href="#message-{{ fld.typ.strip(".") }}" class="message-type">{{ fld.typ }}</a>
-                {% endif %}
-            </td>
-            <td>
-                {% if fld.description %}<span>{{ fld.description }}</span>{% endif %}
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+{{ message_field_table(msg.fields) }}
+{% for oneof_group in msg.oneof_groups %}
+    <span class="datatype">oneof</span> <b>{{ oneof_group.name }}</b>
+    {{ message_field_table(oneof_group.fields) }}
+{% endfor %}
 {% if msg.messages %}
     <p>Sub-messages:</p>
     {% for submsg in msg.messages %}
@@ -71,23 +70,39 @@
 {% endif %}
 {% endmacro %}
 
+{#  ---- BEGIN BODY DEFINITION ---- #}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Title</title>
+    <link rel="stylesheet" type="text/css" href="static/style.css"/>
+</head>
+<body>
+<header>
+    <span id="header-title">MDL Protocol Buffers: <span class="monospace grey-hl">{{ file.name }}</span></span>
+</header>
+
+<div id="up-button">Top</div>
+
 {% if file.enums %}
+    <h1 id="enum-types">Enums</h1>
     {% for enum in file.enums %}
         {{ enum_box(enum) }}
+        <div class="sep"></div>
     {% endfor %}
 {% endif %}
 {% if file.messages %}
     <h1 id="message-types">Messages</h1>
     {% for msg in file.messages|sort(attribute="name") %}
-        <div class="sep"></div>
         {{ message_box(msg) }}
+        <div class="sep"></div>
     {% endfor %}
 {% endif %}
 
 {% if file.services %}
-    <h1>Services</h1>
+    <h1 id="service-types">Services</h1>
     {% for service in file.services %}
-        <div class="sep"></div>
         <h2 class="monospace">{{ service.name }}</h2>
         {% if service.description %}
             <p class="description">{{ service.description }}</p>
@@ -101,6 +116,7 @@
             </div>
             <p class="description">{{ rpc.description }}</p>
         {% endfor %}
+        <div class="sep"></div>
     {% endfor %}
 {% endif %}
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>

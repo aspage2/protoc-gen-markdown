@@ -17,14 +17,14 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 import google.protobuf.descriptor_pb2 as desc_proto
-from google.protobuf.compiler.plugin_pb2 import CodeGeneratorRequest
 
 
 @dataclass
 class MessageField:
     name: str
     typ: str
-    is_primitive: bool
+    is_primitive: bool  # True for primitive (non-message, non-enum) types
+    repeated: bool = False
     description: str = ""
 
     def add_description(self, description: str, path: T.List[int]):
@@ -33,10 +33,23 @@ class MessageField:
 
 
 @dataclass
+class OneOfGroup:
+    name: str
+    fields: T.List[MessageField] = field(default_factory=list)
+    description: str = ""
+
+    def add_description(self, descritpion, path):
+        if len(path) < 2:
+            self.description = descritpion
+            return
+
+
+@dataclass
 class Message:
     name: str
     fields: T.List[MessageField] = field(default_factory=list)
     messages: T.List['Message'] = field(default_factory=list)
+    oneof_groups: T.List['OneOfGroup'] = field(default_factory=list)
     enums: T.List['ProtoEnum'] = field(default_factory=list)
     description: str = ""
 
@@ -46,6 +59,16 @@ class Message:
             yield msg
             yield from msg.descendants
 
+    def get_field(self, fn: int) -> MessageField:
+        def _walk():
+            yield from self.fields
+            for o in self.oneof_groups:
+                yield from o.fields
+
+        for i, (v, _) in enumerate(zip(_walk(), range(fn+1))):
+            if i == fn:
+                return v
+
     def add_description(self, description: str, path: T.List[int]):
         if len(path) < 2:
             self.description = description
@@ -53,11 +76,13 @@ class Message:
 
         fid = path[0]
         if fid == desc_proto.DescriptorProto.FIELD_FIELD_NUMBER:
-            self.fields[path[1]].add_description(description, path[2:])
+            self.get_field(path[1]).add_description(description, path[2:])
         elif fid == desc_proto.DescriptorProto.NESTED_TYPE_FIELD_NUMBER:
             self.messages[path[1]].add_description(description, path[2:])
         elif fid == desc_proto.DescriptorProto.ENUM_TYPE_FIELD_NUMBER:
             self.enums[path[1]].add_description(description, path[2:])
+        elif fid == desc_proto.DescriptorProto.ONEOF_DECL_FIELD_NUMBER:
+            self.oneof_groups[path[1]].add_description(description, path[2:])
 
     @staticmethod
     def _make_message(msg, name=None):
@@ -65,6 +90,11 @@ class Message:
             m = Message(".".join([name, msg.name]))
         else:
             m = Message(msg.name)
+
+        # Create oneof groups
+        for decl in msg.oneof_decl:
+            m.oneof_groups.append(OneOfGroup(name=decl.name))
+
         # Populate fields
         for fld in msg.field:
             try:
@@ -73,7 +103,15 @@ class Message:
             except UseMessageTypeName:
                 ts = fld.type_name
                 is_prim = False
-            m.fields.append(MessageField(fld.name, ts, is_prim))
+
+            mf = MessageField(fld.name, ts, is_prim)
+            if fld.label == desc_proto.FieldDescriptorProto.LABEL_REPEATED:
+                mf.repeated = True
+            if fld.HasField("oneof_index"):
+                o = m.oneof_groups[fld.oneof_index]
+                o.fields.append(mf)
+            else:
+                m.fields.append(mf)
 
         # Populate sub-messages
         m.messages.extend(
@@ -204,36 +242,3 @@ class DataType(Enum):
             DataType.FIXED32: "fixed32",
             DataType.FIXED64: "fixed64",
         }[typ]
-
-
-def build_files(request: CodeGeneratorRequest) -> T.List[File]:
-    files = []
-    for proto_file in request.proto_file:
-        f_out = File(proto_file.name)
-        files.append(f_out)
-        f_out.messages.extend(
-            Message.make_message(m) for m in proto_file.message_type
-        )
-        f_out.enums.extend(
-            ProtoEnum.make_enum(e) for e in proto_file.enum_type
-        )
-        for serv in proto_file.service:
-            s = Service(serv.name, [])
-            f_out.services.append(s)
-            for rpc in serv.method:
-                s.rpcs.append(RPC(rpc.name, rpc.input_type, rpc.output_type))
-
-    return files
-
-
-def populate_descriptions(file_model: File, proto_file):
-    for loc in proto_file.source_code_info.location:
-        desc = []
-        if loc.leading_comments:
-            desc.append(loc.leading_comments)
-        if loc.trailing_comments:
-            desc.append(loc.trailing_comments)
-        if loc.leading_detached_comments:
-            desc.extend(l for l in loc.leading_detached_comments)
-        if desc:
-            file_model.add_description(" ".join(desc), loc.path)

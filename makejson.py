@@ -5,7 +5,7 @@ from google.protobuf.compiler.plugin_pb2 import CodeGeneratorRequest, CodeGenera
 import sys
 import json
 
-from model import build_files, populate_descriptions
+from auto_proto_doc.generate import build_files, populate_descriptions
 
 req = CodeGeneratorRequest()
 data = sys.stdin.buffer.read()
