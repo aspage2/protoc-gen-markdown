@@ -8,8 +8,8 @@ from google.protobuf.compiler.plugin_pb2 import (
     CodeGeneratorResponse,
 )
 
-from auto_proto_doc.model import RPC, File, Message, ProtoEnum, Service
 import auto_proto_doc
+from auto_proto_doc.model import RPC, File, Message, ProtoEnum, Service
 
 
 def generate():
