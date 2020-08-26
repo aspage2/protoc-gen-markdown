@@ -1,5 +1,6 @@
 import sys
 import typing as T
+from pathlib import Path
 
 import jinja2 as J
 from google.protobuf.compiler.plugin_pb2 import (
@@ -8,6 +9,7 @@ from google.protobuf.compiler.plugin_pb2 import (
 )
 
 from auto_proto_doc.model import RPC, File, Message, ProtoEnum, Service
+import auto_proto_doc
 
 
 def generate():
@@ -24,7 +26,8 @@ def generate():
     data = sys.stdin.buffer.read()
     req.ParseFromString(data)
 
-    env = J.Environment(loader=J.FileSystemLoader("./templates"))
+    p = Path(auto_proto_doc.__file__).parent
+    env = J.Environment(loader=J.FileSystemLoader(str(p / "templates")))
     fs = build_files(req)
 
     tmpl = env.get_template("base.md")

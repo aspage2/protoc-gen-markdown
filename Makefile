@@ -25,7 +25,7 @@ lint: python/lint
 
 dist: python/dist
 
-md/%.md: %.proto md/ templates/base.md $(wildcard *.py)
+md/%.md: %.proto md/ auto_proto_doc/templates/base.md $(wildcard *.py)
 	pipenv run python -m grpc.tools.protoc -I. --markdown_out=md $<
 
 json/%.json: %.proto json/ $(wildcard *.py)

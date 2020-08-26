@@ -1,1 +1,1 @@
-include templates/*
+include auto_proto_doc/templates/*
