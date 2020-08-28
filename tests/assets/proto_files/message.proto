@@ -1,0 +1,16 @@
+
+syntax = "proto3";
+
+message What {
+  bool flag = 1;
+}
+
+// Message docstring
+message MyMessage {
+  // Int docstring
+  int32 intval = 1;
+
+  string strval = 2; // string docstring
+
+  repeated What whatval = 3;
+}

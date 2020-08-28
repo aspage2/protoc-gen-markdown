@@ -1,11 +1,11 @@
 -include $(shell curl -sSL -o .build-harness "https://raw.githubusercontent.com/mintel/build-harness/master/templates/Makefile.build-harness"; echo .build-harness)
 
+WITH_PIPENV=pipenv run
+
 .PHONY: init
 init: bh/init
 	@$(MAKE) bh/venv pipenv
 
-html/:
-	mkdir html
 json/:
 	mkdir json
 raw/:
@@ -13,8 +13,8 @@ raw/:
 md/:
 	mkdir md
 
-test:
-	echo "good job"
+test: pipenv
+	$(WITH_PIPENV) python -m pytest tests/ -vv
 
 test-post-build:
 	echo "nice work"
@@ -26,13 +26,13 @@ lint: python/lint
 dist: python/dist
 
 md/%.md: %.proto md/ auto_proto_doc/templates/base.md $(wildcard *.py)
-	pipenv run python -m grpc.tools.protoc -I. --markdown_out=md $<
+	$(WITH_PIPENV) python -m grpc.tools.protoc -I. --markdown_out=md $<
 
 json/%.json: %.proto json/ $(wildcard *.py)
-	pipenv run python -m grpc.tools.protoc -I. --plugin=protoc-gen-json=makejson.py --custom_out=json $<
+	$(WITH_PIPENV) python -m grpc.tools.protoc -I. --plugin=protoc-gen-json=makejson.py --custom_out=json $<
 
 raw/%: %.proto raw/
-	pipenv run python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=raw.py --custom_out=raw $<
+	$(WITH_PIPENV) python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=raw.py --custom_out=raw $<
 
 clean: pipenv/clean python/clean clean-artifact
 

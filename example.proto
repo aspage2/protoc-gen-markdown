@@ -3,6 +3,22 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
+enum MyEnum {
+    // Jim is him
+    // I kicked his shin
+    // ```python
+    // print("ouch.")
+    // ```
+    JIM = 0;
+    JOE = 1; // Joe the schmoe
+    JACK = 2; // Jack is back
+}
+
+// The enum
+enum MyEnum2 {
+    A = 0;
+}
+
 message AddDecisionRequest {
 
     // A named decision is a decision paired with its feature IDs
@@ -13,6 +29,12 @@ message AddDecisionRequest {
 
     repeated NamedDecision decision = 1;
     string agent_id = 2; // The agent which made the decision
+
+    enum MyEnum {
+        JIM = 0;
+        JOE = 1;
+        JACK = 2;
+    }
 }
 
 // Decision made by a text-quality-like agent
@@ -33,6 +55,9 @@ message WhatMessage {
     // This is below & detached from b.
 
     int32 c = 3;
+
+    // This seems useless
+    MyEnum2 jim = 5;
 }
 
 // Decision made by a binary classifier
@@ -43,6 +68,8 @@ message BinaryClassifierDecision {
 
 // MDLDecision is a "union" field which enables
 message MDLDecision {
+    string jimbo = 4;
+    int32 what = 8; // What is this??
     oneof decision {
         TextQualityDecision text_quality_decision = 1;
         BinaryClassifierDecision binary_classifier_decision = 2;

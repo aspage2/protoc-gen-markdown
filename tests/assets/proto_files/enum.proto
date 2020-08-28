@@ -1,0 +1,16 @@
+
+syntax = "proto3";
+
+
+/* Enum docstring
+ * With multiple lines
+ * foobar
+ */
+enum TestEnum {
+  // Value1 docstring
+  ONE = 0;
+  TWO = 1; // Value2 docstring
+
+  THREE = 2;
+  // Value3 docstring
+}

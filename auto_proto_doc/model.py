@@ -11,7 +11,6 @@ page for each file in the request:
  2. Populate the tree's node descriptions using the location items on the request.
  3. Render the html document(s) using the fully-fleshed-out tree.
 """
-
 import typing as T
 from dataclasses import dataclass, field
 from enum import Enum
@@ -20,10 +19,35 @@ import google.protobuf.descriptor_pb2 as desc_proto
 
 
 @dataclass
+class FieldType:
+    id: "DataType"
+    name: str
+
+    @property
+    def is_primitive(self):
+        return not (self.is_message or self.is_enum)
+
+    @property
+    def is_message(self):
+        return self.id is DataType.MESSAGE
+
+    @property
+    def is_enum(self):
+        return self.id is DataType.ENUM
+
+    @staticmethod
+    def make(fld) -> "FieldType":
+        _id = DataType(fld.type)
+        f = FieldType(id=_id, name=fld.type_name)
+        if f.is_primitive:
+            f.name = f.id.name
+        return f
+
+
+@dataclass
 class MessageField:
     name: str
-    typ: str
-    is_primitive: bool  # True for primitive (non-message, non-enum) types
+    type: FieldType
     repeated: bool = False
     description: str = ""
 
@@ -31,11 +55,18 @@ class MessageField:
         if len(path) < 2:
             self.description = description
 
+    @staticmethod
+    def make(fld) -> "MessageField":
+        ft = FieldType.make(fld)
+        mf = MessageField(name=fld.name, type=ft)
+        if fld.label == desc_proto.FieldDescriptorProto.LABEL_REPEATED:
+            mf.repeated = True
+        return mf
+
 
 @dataclass
 class OneOfGroup:
     name: str
-    fields: T.List[MessageField] = field(default_factory=list)
     description: str = ""
 
     def add_description(self, descritpion, path):
@@ -59,16 +90,6 @@ class Message:
             yield msg
             yield from msg.descendants
 
-    def get_field(self, fn: int) -> MessageField:
-        def _walk():
-            yield from self.fields
-            for o in self.oneof_groups:
-                yield from o.fields
-
-        for i, (v, _) in enumerate(zip(_walk(), range(fn + 1))):
-            if i == fn:
-                return v
-
     def add_description(self, description: str, path: T.List[int]):
         if len(path) < 2:
             self.description = description
@@ -76,7 +97,7 @@ class Message:
 
         fid = path[0]
         if fid == desc_proto.DescriptorProto.FIELD_FIELD_NUMBER:
-            self.get_field(path[1]).add_description(description, path[2:])
+            self.fields[path[1]].add_description(description, path[2:])
         elif fid == desc_proto.DescriptorProto.NESTED_TYPE_FIELD_NUMBER:
             self.messages[path[1]].add_description(description, path[2:])
         elif fid == desc_proto.DescriptorProto.ENUM_TYPE_FIELD_NUMBER:
@@ -85,7 +106,7 @@ class Message:
             self.oneof_groups[path[1]].add_description(description, path[2:])
 
     @staticmethod
-    def _make_message(msg, name=None):
+    def _make(msg, name=None):
         if name is not None:
             m = Message(".".join([name, msg.name]))
         else:
@@ -97,34 +118,24 @@ class Message:
 
         # Populate fields
         for fld in msg.field:
-            try:
-                ts = DataType.display_string(DataType(fld.type))
-                is_prim = True
-            except UseMessageTypeName:
-                ts = fld.type_name
-                is_prim = False
-
-            mf = MessageField(fld.name, ts, is_prim)
-            if fld.label == desc_proto.FieldDescriptorProto.LABEL_REPEATED:
-                mf.repeated = True
+            mf = MessageField.make(fld)
             if fld.HasField("oneof_index"):
-                o = m.oneof_groups[fld.oneof_index]
-                o.fields.append(mf)
-            else:
-                m.fields.append(mf)
+                mf.oneof = m.oneof_groups[fld.oneof_index]
+            m.fields.append(mf)
 
         # Populate sub-messages
-        m.messages.extend(
-            Message._make_message(submsg, m.name) for submsg in msg.nested_type
-        )
+        m.messages.extend(Message._make(submsg, m.name) for submsg in msg.nested_type)
 
         # Populate enums
-        m.enums.extend(ProtoEnum.make_enum(e) for e in msg.enum_type)
+        for e in msg.enum_type:
+            en = ProtoEnum.make_enum(e)
+            en.name = ".".join([m.name, en.name])
+            m.enums.append(en)
         return m
 
     @staticmethod
-    def make_message(msg: desc_proto.DescriptorProto) -> "Message":
-        return Message._make_message(msg)
+    def make(msg: desc_proto.DescriptorProto) -> "Message":
+        return Message._make(msg)
 
 
 @dataclass
@@ -184,7 +195,7 @@ class ProtoEnum:
             return
         fid = path[0]
         if fid == desc_proto.EnumDescriptorProto.VALUE_FIELD_NUMBER:
-            self.values[path[1]].add_description(description, path)
+            self.values[path[1]].add_description(description, path[2:])
 
     @staticmethod
     def make_enum(enum: desc_proto.EnumDescriptorProto) -> "ProtoEnum":
@@ -203,10 +214,6 @@ class ProtoEnumValue:
             self.description = description
 
 
-class UseMessageTypeName(Exception):
-    pass
-
-
 class DataType(Enum):
     """Data types for stuff"""
 
@@ -223,10 +230,8 @@ class DataType(Enum):
     FIXED64 = 6
     GROUP = 10
 
-    @staticmethod
-    def display_string(typ: "DataType"):
-        if typ is DataType.MESSAGE:
-            raise UseMessageTypeName()
+    @property
+    def name(self):
         return {
             DataType.STRING: "string",
             DataType.INT_32: "int32",
@@ -235,4 +240,4 @@ class DataType(Enum):
             DataType.BOOL: "bool",
             DataType.FIXED32: "fixed32",
             DataType.FIXED64: "fixed64",
-        }[typ]
+        }[self]

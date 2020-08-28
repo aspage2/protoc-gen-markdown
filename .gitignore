@@ -1,7 +1,4 @@
 
-# These files are changed by pytest
-tests/watched_service/__init__.py
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -10,6 +7,11 @@ __pycache__/
 .build-harness*
 build-harness*
 requirements*.txt
+
+html/
+md/
+json/
+raw/
 
 # C extensions
 *.so

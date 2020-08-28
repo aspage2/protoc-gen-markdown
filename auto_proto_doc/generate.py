@@ -45,18 +45,21 @@ def generate():
     sys.stdout.buffer.write(resp.SerializeToString())
 
 
-def build_files(request: CodeGeneratorRequest) -> T.List[File]:
+def build_files(request: CodeGeneratorRequest, skip_google=True) -> T.List[File]:
     files = []
     for proto_file in request.proto_file:
+        if skip_google and proto_file.name.startswith("google"):
+            continue
         f_out = File(proto_file.name)
         files.append(f_out)
-        f_out.messages.extend(Message.make_message(m) for m in proto_file.message_type)
+        f_out.messages.extend(Message.make(m) for m in proto_file.message_type)
         f_out.enums.extend(ProtoEnum.make_enum(e) for e in proto_file.enum_type)
         for serv in proto_file.service:
             s = Service(serv.name, [])
             f_out.services.append(s)
             for rpc in serv.method:
                 s.rpcs.append(RPC(rpc.name, rpc.input_type, rpc.output_type))
+        populate_descriptions(f_out, proto_file)
 
     return files
 

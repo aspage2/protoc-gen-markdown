@@ -7,6 +7,7 @@ verify_ssl = true
 grpcio-tools = "*"
 autoflake = "*"
 advbumpversion = "*"
+pytest = "*"
 
 [packages]
 jinja2 = "*"
