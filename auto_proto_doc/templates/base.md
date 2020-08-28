@@ -3,7 +3,7 @@
 ### Enum: {{ enum.name }}
 {% if enum.description %}{{ description(enum.description) }}
 {% endif %}
-{%- for v in enum.values -%}
+{% for v in enum.values -%}
  * **{{ v.name }}**{% if v.description %}
  {{ description(v.description) }}{% endif %}
 {% endfor -%}
@@ -31,11 +31,11 @@
 
 {# Display MessageFields as a table. #}
 {%- macro field_table(flds) -%}
-Name|Type|Description|OneOf
--|-|-|-
 {% for field in flds -%}
-`{{ field.name }}`|{{ field_type(field) }}|{{ field.description|replace("\n", " ")|trim(" ") }}|{% if field.oneof %}{{ field.oneof.name }}{% endif %}
-{% endfor %}
+ * `{{ field.name }}`, {{ field_type(field) }}{% if field.oneof %} (oneof {{ field.oneof.name }}){% endif %}
+ > {{ field.description|replace("\n", " ")|trim(" ") }}
+ 
+{% endfor -%}
 {%- endmacro -%}
 
 {# Display all information regarding a message #}
@@ -51,7 +51,7 @@ Name|Type|Description|OneOf
 
 {#- ######## BEGIN TEMPLATE ######## #}
 
-# MDL Protobuf - {{ file.name }}
+# {{ file.name }}
 {% if file.enums %} * [Enums](#enums) {% endif %}
 {% if file.messages %} * [Messages](#messages) {% endif %}
 {% if file.services %} * [Services](#services) {% endif %}

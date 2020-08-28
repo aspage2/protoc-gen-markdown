@@ -37,9 +37,8 @@ def generate():
         # skip library protobufs
         if f.name.lower().startswith("google"):
             continue
-        populate_descriptions(f, req.proto_file[i])
         f_out = resp.file.add()
-        f_out.name = (f.name.rsplit(".", 1)[0].rsplit("/", 1)[-1]) + ".md"
+        f_out.name = f'{f.name.rsplit(".", 1)[0]}.md'
         f_out.content = tmpl.render(file=f)
 
     sys.stdout.buffer.write(resp.SerializeToString())

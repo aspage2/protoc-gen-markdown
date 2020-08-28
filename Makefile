@@ -32,7 +32,8 @@ json/%.json: %.proto json/ $(wildcard *.py)
 	$(WITH_PIPENV) python -m grpc.tools.protoc -I. --plugin=protoc-gen-json=makejson.py --custom_out=json $<
 
 raw/%: %.proto raw/
-	$(WITH_PIPENV) python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=raw.py --custom_out=raw $<
+	$(WITH_PIPENV) python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=scripts/raw.py --custom_out=raw $<
+
 
 release_patch: changelog/release/patch bumpversion/patch
 release_minor: changelog/release/minor bumpversion/minor
