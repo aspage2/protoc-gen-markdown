@@ -34,6 +34,10 @@ json/%.json: %.proto json/ $(wildcard *.py)
 raw/%: %.proto raw/
 	$(WITH_PIPENV) python -m grpc.tools.protoc -I. --plugin=protoc-gen-custom=raw.py --custom_out=raw $<
 
+release_patch: changelog/bump/patch bumpversion/patch
+release_minor: changelog/bump/minor bumpversion/minor
+release_major: changelog/bump/major bumpversion/major
+
 clean: pipenv/clean python/clean clean-artifact
 
 .PHONY: clean clean-artifact
