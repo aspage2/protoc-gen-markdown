@@ -65,7 +65,7 @@ message TurnOnLightsRequest {
 }
 ```
 
-**Trailing Comments** Sit either at the end of a node's line or directly below a node. If both exist, only the comment on-the-line is attributed as a trailing comment.
+**Trailing Comments** sit either at the end of a node's line or directly below a node. If both exist, only the comment on-the-line is attributed as a trailing comment.
 
 ```protobuf
 int32 brightness = 1; // Trailing comment 
