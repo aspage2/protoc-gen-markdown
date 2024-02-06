@@ -26,7 +26,7 @@ lint: python/lint
 dist: python/dist
 
 md/%.md: %.proto md/ auto_proto_doc/templates/base.md $(wildcard *.py)
-	$(WITH_PIPENV) python -m grpc.tools.protoc -I. --markdown_out=md $<
+	$(WITH_PIPENV) python -m grpc.tools.protoc -I. --plugin=protoc-gen-markdown=./run.py --markdown_out=md $<
 
 json/%.json: %.proto json/ $(wildcard *.py)
 	$(WITH_PIPENV) python -m grpc.tools.protoc -I. --plugin=protoc-gen-json=makejson.py --custom_out=json $<

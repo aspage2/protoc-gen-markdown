@@ -12,7 +12,6 @@ pytest = "*"
 [packages]
 jinja2 = "*"
 protobuf = "*"
-protobuf-doc-autogen = {editable = true, path = ".", version="*"}
 
 [requires]
 python_version = "3.8"
